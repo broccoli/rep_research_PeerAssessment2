@@ -1,0 +1,231 @@
+---
+title: "Economic and Health Impact of Storm Events"
+author: "Rich Doan"
+date: "March 20, 2015"
+output: html_document
+---
+
+## Synopsis
+This report provides an overview of the types of weather events that have historically been the most costly and the most harmful in the U.S.  Costliness has been determined by the sum of property damage and crop damage.  Harmfulness to health has been determined by the sum of fatalities and injuries, collectively referred to here as "casualties."  I will examine weather events over the period 1996-2011 and show which ten events have been the most costly and most dangerous.  The purpose of the analysis is to understand what types of events, relatively speaking, are the most costly and dangerous, for the purpose of public policy.  The ten events and their relative impacts, for both cost and danger, can be seen in the results below.
+
+## Data Processing
+
+### Loading and reading the data
+The data was in a zipped csv file loaded from a National Weather Service server.  It was read into a data frame.
+
+```{r cache=TRUE}
+fileurl = "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+download.file(url=fileurl, destfile="StormData.csv.bz2", method="curl")	
+data.raw <- read.csv("StormData.csv.bz2")
+data.a <- data.raw   # make copy to manipulate
+```
+
+### Select observations from 1996 on
+The NWS data includes observations from 1950 to 2011.  However, the criteria for data collection has changed over that time period.  Starting in 1996, NWS has collected data on 48 types of events, up from 3 types of events in the previous 28 years.  This analysis will only consider events starting in 1996.  For more information on monitored event types, see the following url:  http://www.ncdc.noaa.gov/stormevents/details.jsp?type=eventtype.
+
+
+```{r cache=TRUE}
+data.a$date <- strptime(data.a$BGN_DATE, "%m/%d/%Y")
+data.a <- subset(data.a, data.a$date >= strptime("1/1/1996", "%m/%d/%Y"))
+```
+
+### Compute total casualties and total damage
+Total casualties are computed as the sum of fatalities and injuries.  Total damage is computed as the sum of property and crop damage.  Fields for the totals are added to the data frame.  For the purposes of the analysis, observations that have zero fatalities and zero casualties are ignored.
+
+```{r cache=TRUE}
+### multiply listed damage value by factor
+mult <- function(x, exp) {
+	if (exp == "K") 
+		return(x * 1000)
+	if (exp == "M") 
+		return(x * 1e+06)
+	if (exp == "B") 
+		return(x * 1e+09)
+	return(x)
+}
+data.a$pdmg <- mapply(mult, data.a$PROPDMG, data.a$PROPDMGEXP)  # compute property damage
+data.a$cdmg <- mapply(mult, data.a$CROPDMG, data.a$CROPDMGEXP)  # compute crop damage
+data.a$tdmg <- data.a$pdmg + data.a$cdmg	                      # compute total damage
+data.a$casualties <- data.a$FATALITIES + data.a$INJURIES
+data.a <- subset(data.a, tdmg > 0 | casualties > 0)     # ignore rows with no casualties and damage
+```
+
+
+### Correcting anomalous values in Napa events
+Two events in Napa Co., CA contained anomalous values that have been corrected by NOAA.  An event on 12/31/2005 has listed property damage of $115M and crop damage $32.5M.  These have been corrected to be $0 and $0, respectively.  An event on 1/1/2006 has listed property damage of $115B.  This has been corrected to be $115M.  See the following url for the correct values:  http://www.ncdc.noaa.gov/stormevents/textsearch.jsp?q=Napa+River+City+and+Parks+Department.
+
+```{r cache=TRUE}
+## correct data for Napa Flood, rows 567251, 605953
+data.a["567251", "PROPDMG"] <- 0
+data.a["567251", "CROPDMG"] <- 0
+data.a["567251", "PROPDMGEXP"] <- "0"
+data.a["567251", "CROPDMGEXP"] <- "0"
+data.a["605953", "PROPDMGEXP"] <- "M"
+```
+
+
+### Cleaning EVTYPE
+The data are to be analyzed by type of event.  The type of event is found in the field *EVTYPE*.  
+
+```{r}
+unique <- length(unique(data.a$EVTYPE))
+unique
+```
+
+The observations that have either damage or casualties contain `r unique` distinct values for EVTYPE.
+
+#### Simple corrections of EVTYPE
+The guidelines for categorizing events are in "Storm Data Preparation," ("SDP") found at https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf.  The SDP specifies 48 types of events.  The approach in this report is to match as many of the `r unique` distinct values to the 48 SDP values as possible.  If the `r unique` values contain some or all of the 48 types as listed in the SDP, at least `r unique - 48` values do not match the SDP list.  I will assume that many of the unmatched values can be straightforwardly matched to the 48 SDP values, using the following principles.
+
+1. Some values match the SDP when extra characters or symbols are removed (e.g., "hail 175").
+2. Some values match the SDP when different forms of words are exchanged (e.g., "WINDS" for "WIND", "FLOODING" for "FLOOD").
+3. Abbrevations of words are replaced with nonabbreviated words (e.g., "TSTM" for "THUNDERSTORM").
+
+"Corrections" of the EVTYPE field were then made with regular expressions.
+
+```{r cache=TRUE}
+data.a$EVTYPE <- toupper(data.a$EVTYPE)
+data.a$EVTYPE <- gsub("WINDS", "WIND", data.a$EVTYPE)
+data.a$EVTYPE <- gsub("RAINS", "RAIN", data.a$EVTYPE)
+data.a$EVTYPE <- gsub("HAIL [0-9].*", "HAIL", data.a$EVTYPE)
+data.a$EVTYPE <- gsub("TSTM", "THUNDERSTORM", data.a$EVTYPE)
+data.a$EVTYPE <- gsub("THUNDERSTORMS", "THUNDERSTORM", data.a$EVTYPE)
+data.a$EVTYPE <- gsub("FLOODING", "FLOOD", data.a$EVTYPE)
+data.a$EVTYPE <- gsub("FLOODS", "FLOOD", data.a$EVTYPE)
+data.a$EVTYPE <- gsub("TROPICAL STORM.*", "TROPICAL STORM", data.a$EVTYPE)
+data.a$EVTYPE <- gsub("HURRICANE.*", "HURRICANE", data.a$EVTYPE)
+data.a$EVTYPE <- gsub(".*WATERSPOUT.*", "WATERSPOUT", data.a$EVTYPE)
+data.a$EVTYPE <- gsub("TORNADO.*", "TORNADO", data.a$EVTYPE)
+data.a$EVTYPE <- gsub(".*FLASH FLOOD.*", "FLASH FLOOD", data.a$EVTYPE)
+data.a$EVTYPE <- gsub("THUNDERSTORM WIND .*", "THUNDERSTORM WIND", data.a$EVTYPE)
+```
+
+
+#### Ad hoc translations with translation list
+In addition, substitutions were made on an ad hoc basis.  These substitutions were made with the following methods.
+
+1. Some *EVTYPE* values match the SDP when obvious typos are corrected (e.g, "THUNERSTORM WIND").
+2. Some values are shown to be subcategories in the SDP (e.g., "Gustnado" is a subcategory of "Thunderstorm Wind")
+3. Educated guesses were made to replace values in the original *EVYTPE* list with values from SDP (e.g, "UNSEASONAL RAIN" replaced with "HEAVY RAIN").
+
+A text file was created that has a list of the SDP types and substitutions for each.  (For purposes of reproducibility, the contents of the list are shown below in an appendix.)  Another field -- *event* -- was added to the data, which was populated with either the SDP type if *EVTYPE* was an exact match for an SDP on the list or its substitution.  If *EVTYPE* was not matched, the original *EVTYPE* was used in the event field.
+
+```{r cache=TRUE}
+## create a new column for cleaned evtype
+data.a$event <- ""
+
+## capitalize evtype in data table
+data.a$EVTYPE <- toupper(data.a$EVTYPE)
+
+## read in list of SDP event types and their substitutions
+events_comma <- read.table("storm_events_list.txt", sep=";")
+events <- events_comma[, 1]
+events <- toupper(events)
+
+library("stringr")
+events <- sapply(events, function(x) {
+  v <- strsplit(x, split=",")[[1]]
+	v <- str_trim(v)
+	paste(v, collapse=",")
+})
+events <- unname(events)
+
+translate <- function(evtype) {
+	for (i in seq_along(events)) {
+		v <- strsplit(events[i], split=",")[[1]]
+		if (evtype %in% v) {
+			return (v[1])
+		}
+	}
+	return(evtype)
+}
+
+## translate EVTYPE using substitution list
+data.a$event <- sapply(data.a$EVTYPE, translate)
+```
+
+
+The *event* field now holds either an SDP value or an unmatched *EVTYPE*.  It is regarded here that unmatched *EVTYPE*s cannot be matched because they are vague (not obviously matching to an SDP value) or ambiguous (possibly matching multiple SDP values) without expert knowledge of the actual events and/or the SDP.  The resulting *event* field -- SDP events plus unmatched *EVTYPE*s -- will be taken as the basis for analysis.
+
+## Results
+
+The objective is to find the ten most costly events (in dollars) and the ten most dangerous events (in terms of casualties).
+
+### Most costly events
+
+The data can now be processed to find the most costly events.  The data is aggregated by total damage and sorted.  The top ten damaging events are selected.
+
+```{r cache=TRUE}
+data.dmg <- subset(data.a, data.a$tdmg > 0)
+dmg <- aggregate(tdmg ~ event, data = data.dmg, sum)
+dmg$event <- factor(dmg$event)
+dmg$tdmg <- round(dmg$tdmg / 1000000000, 2) # find damage in billions of dollars
+dmg <- dmg[order(dmg$tdmg, decreasing = TRUE), ]
+dmg.top <- dmg[1:10, ]
+dmg.top$event <- reorder(dmg.top$event, -dmg.top$tdmg)
+```
+
+```{r echo=FALSE}
+print("Total damage in billions of dollars")
+dmg.top
+```
+
+The most damaging event types can now be plotted.
+```{r}
+library(ggplot2)
+g <- ggplot(dmg.top, aes(dmg.top$event, dmg.top$tdmg))
+g <- g + geom_bar(aes(fill=event), stat="identity")
+g <- g + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+g <- g + xlab("Event type") + ylab("Total damage in billions of dollars")
+g <- g + ggtitle("10 Most costly event types, 1996-2011") + theme(legend.position = "none")
+g <- g + scale_y_continuous(breaks = seq(0,160,by = 10))
+print(g)
+```
+
+### Most dangerous events
+
+The data can be processed to find the most dangerous events.  The data is aggregated by total casualties and sorted.  The ten event types with the highest casualties can be selected.
+
+```{r cache=TRUE}
+data.cas <- subset(data.a, data.a$casualties > 0)
+cas <- aggregate(casualties ~ event, data = data.cas, sum)
+cas$event <- factor(cas$event)
+cas$casualties <- round(cas$casualties / 1000, 2)
+cas <- cas[order(cas$casualties, decreasing=TRUE), ]
+cas.top <- cas[1:10, ]
+cas.top$event <- reorder(cas.top$event, -cas.top$casualties)
+```
+
+```{r echo=FALSE}
+print("Total casualties in thousands of casualties")
+library(knitr)
+cas.top
+```
+
+The most dangerous events can now be plotted.
+
+```{r}
+g <- ggplot(cas.top, aes(cas.top$event, cas.top$casualties))
+g <- g + geom_bar(aes(fill=event), stat="identity")
+g <- g + theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+g <- g + xlab("Event type") + ylab("Total casualties in thousands") + theme(legend.position = "none")
+g <- g + ggtitle("10 Most dangerous event types, 1996-2011")
+g <- g + scale_y_continuous(breaks = seq(0,25,by = 5))
+print(g)
+```
+
+## Appendix:  translation list
+The text file *storm_events_list.txt* was used to populate the added field *event* with one of the 48 types found in the SDP.  The text file has 48 lines of text.  Each line starts with one of the 48 types.  It may also be followed by alternate spellings or versions that are to be substituted by one of the 48 types, separated by commas.  Thus, each line is a comma-separated list.  (Note the file is not a csv file, though.)  When a match for EVTYPE is found in a comma-separated list, the first entry in the list is taken to populate the *event* field.  
+
+The text file is read with the separator specified as semi-colon.  The semi-colon was used because it does not appear in the file.  The objective is to read the file as a table with one field, which contains an entire line of the text file.  The contents of the table are shown below, so the reader may reproduce all of the *event* translations that are used in this analysis.
+
+```{r echo=FALSE}
+print("List of 48 SDP event types and alternate versions to be translated:")
+```
+
+```{r}
+## The separator ";" is used because it does not appear in the file.
+events_comma <- read.table("storm_events_list.txt", sep = ";")
+events_comma
+```
+

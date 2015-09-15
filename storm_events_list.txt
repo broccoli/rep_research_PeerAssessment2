@@ -1,0 +1,49 @@
+Astronomical Low Tide
+Avalanche
+Blizzard, heavy snow/blizzard, ground blizzard, blizzard/winter storm
+Coastal Flood, erosion/cstl flood, coastal flood/erosion, coastal  flood/erosion, tidal flood, heavy surf coastal flood, coastal surge, astronomical high tide
+Cold/Wind Chill
+Debris Flow, landslide, landslides, mudslide, mud slide, rock slide, mudslide, mud slides
+Dense Fog, fog
+Dense Smoke
+Drought, heat wave drought, drought/excessive heat
+Dust Devil, landspout
+Dust Storm, dust storm/high wind
+Excessive Heat, extreme heat
+Extreme Cold/Wind Chill, extreme cold, extreme windchill, cold, extreme wind chill, extended cold, unseasonably cold
+Flash Flood, flood flash, flood/flashflood, flood/flash, flood/flash/flood
+Flood, river flood, urban/sml stream fld, river flooding, lake flood
+Frost/Freeze, frost, freeze, damaging freeze, frost\\freeze, early frost, agricultural freeze, hard freeze
+Funnel Cloud
+Freezing Fog
+Hail, small hail, hail 100, hailstorm, hail 450, hail 175, hail 150, hail 75, hail 0.75, hail damage, marine hail
+Heat, heat wave, unseasonably warm
+Heavy Rain, heavy rain/high surf, urban flood, heavy rain/flood, heavy rain/severe weather, severe thunderstorm, flood/rain/wind, unseasonal rain, urban and small, urban small, urban/small stream flood, heavy shower, urban/small stream, small stream flood, heavy rain/small stream urban, river and stream flood, urban and small stream floodin
+Heavy Snow, blowing snow, excessive snow
+High Surf, heavy surf/high surf, rough surf, heavy surf
+High Wind, high wind/cold, high  wind, high wind/, high wind damage
+Hurricane (Typhoon), typhoon, hurricane, hurricane/typhoon
+Ice Storm, icy roads, glaze ice, ice roads, glaze, black ice, glaze/ice storm, ice on road, ice roads
+Lake-Effect Snow
+Lakeshore Flood
+Lightning, lightningm, ligntning, lighting, lightning  wauseon
+Marine Hail
+Marine High Wind, marine accident, high seas, rough seas
+Marine Strong Wind
+Marine Thunderstorm Wind, marine tstm wind
+Rip Current, rip currents
+Seiche
+Sleet, winter weather/mix, freezing drizzle
+Storm Surge/Tide, storm surge
+Strong Wind, strong winds, wind
+Thunderstorm Wind, tstm wind, thunderstormwind, thunderstorm wind53, thunderstorm wins, thunderstormw, thunderstrom wind, thundertorm wind, tunderstorm wind, thunderstorm wind g50,
+thunderstorm wind, thunderstorm wind 40, thundeerstorm wind, thunderstorm wind, thunderstorm wind/, trees, gustnado, microburst, dry microburst, wet microburst, microburst wind, severe thunderstorm wind, thunderestorm wind, thunderstorm wind/ tree, thunderstorm wind/awning, thunderstorm damage to, thunerstorm wind, thunderstorm wind., thunderstorm  wind, dry microburst wind
+Tornado, cold air tornado, torndao
+Tropical Depression
+Tropical Storm
+Tsunami
+Volcanic Ash
+Waterspout, Waterspout/tornado, waterspout, tornado, waterspout-
+Wildfire, wild/forest fire, wild fires, wild/forest fires, wildfires, forest fires, grass fires, brush fire
+Winter Storm, winter storms, winter storm high wind, heavy snow and strong wind, snow and ice storm, sleet/ice storm, heavy snow/winter storm
+Winter Weather
